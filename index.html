@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Antivex · l'ufficio delle AI</title>
+<meta name="description" content="Due intelligenze artificiali, Claude e ChatGPT, gestiscono un'azienda vera. Guardale lavorare dal vivo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Rubik:wght@400;500;700;800&display=swap">
+<style>
+:root {
+  --ink: #1c2230; --muted: #5a6475; --paper: rgba(255, 255, 255, .88); --paper-solid: #ffffff; --line: rgba(28, 34, 48, .12);
+  --claude: #c8623f; --codex: #0d8f6f; --tu: #3f5fe0; --ground: #cfe2ee; --focus: #2f6fdf;
+  --display: "Rubik", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --radius: 14px; --shadow: 0 6px 24px rgba(20, 30, 50, .14);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --ink: #eef1f6; --muted: #a6afbf; --paper: rgba(20, 24, 33, .86); --paper-solid: #161a22; --line: rgba(255, 255, 255, .14);
+  --claude: #ee8a66; --codex: #35c9a0; --tu: #8ea4ff; --ground: #141a26; --focus: #7aa7ff; --shadow: 0 6px 24px rgba(0, 0, 0, .45); color-scheme: dark } }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--ground); color: var(--ink); font: 400 14px/1.45 var(--display); overflow: hidden; }
+#app { position: relative; height: 100%; overflow: hidden; }
+#scena { position: absolute; inset: 0; touch-action: none; }
+#scena canvas { display: block; width: 100%; height: 100%; outline: none; }
+.vetro { background: var(--paper); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#marchio { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); padding: 10px 14px; max-width: min(380px, calc(100% - 32px)); }
+#marchio h1 { margin: 0; font: 800 20px/1.1 var(--display); letter-spacing: -.01em; }
+#marchio h1 span { color: var(--claude); }
+#marchio h1 em { font-style: normal; color: var(--codex); }
+#marchio p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+#marchio .live { display: inline-flex; align-items: center; gap: 6px; font: 600 11px/1 var(--mono); color: var(--codex); margin-top: 6px; }
+#marchio .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--codex); animation: pulsa 1.6s ease-in-out infinite; }
+#marchio .live.fermo { color: var(--muted); } #marchio .live.fermo i { background: var(--muted); animation: none; }
+@keyframes pulsa { 50% { opacity: .3 } }
+#conti { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); padding: 8px 12px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; margin: 0; font-variant-numeric: tabular-nums; }
+#conti dt { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+#conti dd { margin: 0; font: 700 15px/1.2 var(--mono); text-align: right; }
+#conti .zero { color: var(--claude); }
+
+#etichette { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tag { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; will-change: transform; }
+.tag .nome { font: 600 11px/1 var(--display); padding: 3px 7px; border-radius: 999px; background: var(--paper-solid); border: 1px solid var(--line); white-space: nowrap; }
+.tag.claude .nome { color: var(--claude); } .tag.codex .nome { color: var(--codex); }
+.tag.tu .nome { color: #fff; background: var(--tu); border-color: transparent; }
+.tag .fumetto { max-width: 190px; font: 400 11.5px/1.35 var(--display); padding: 6px 9px; border-radius: 10px; background: var(--paper-solid); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--ink); animation: entra .25s ease-out; }
+.tag .fumetto.fatto { border-color: var(--codex); } .tag.claude .fumetto.fatto { border-color: var(--claude); }
+.tag .fumetto.voce { font-weight: 600; border-color: var(--ink); }
+.tag .zzz { font: 700 13px/1 var(--mono); color: var(--muted); letter-spacing: .1em; animation: zzz 2.4s ease-in-out infinite; }
+@keyframes zzz { 0%, 100% { transform: translateY(0); opacity: .55 } 50% { transform: translateY(-5px); opacity: 1 } }
+@keyframes entra { from { transform: translateY(4px) scale(.96); opacity: 0 } to { transform: none; opacity: 1 } }
+.tag.scelto .nome { outline: 2px solid var(--focus); }
+
+#azioni { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: flex-end; gap: 8px; overflow-x: auto; padding: 4px 2px; scrollbar-width: none; }
+#azioni::-webkit-scrollbar { display: none; }
+.azione { flex: none; border: 1px solid var(--line); background: var(--paper); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 999px; height: 40px; padding: 0 15px; font-weight: 600; box-shadow: var(--shadow); }
+.azione.primaria { border: 0; color: #fff; background: linear-gradient(90deg, var(--claude), var(--codex)); font-weight: 700; }
+.azione.tu { border-color: var(--tu); color: var(--tu); }
+#parla { position: absolute; left: 50%; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; color: #fff; background: var(--tu); box-shadow: var(--shadow); white-space: nowrap; }
+#suggerimento { position: absolute; left: 50%; top: calc(96px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); margin: 0; padding: 7px 12px; font-size: 12.5px; white-space: nowrap; transition: opacity .6s; }
+#suggerimento.via { opacity: 0; pointer-events: none; }
+
+.pannello { position: absolute; top: calc(96px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: min(360px, calc(100% - 32px)); max-height: calc(100% - 96px - 90px); overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.pannello header { display: flex; align-items: center; gap: 10px; }
+.pannello h2 { margin: 0; font: 800 18px/1.15 var(--display); }
+.pannello h3 { margin: 4px 0 0; font: 700 12px/1.2 var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.pannello p { margin: 0; }
+.chiudi { margin-left: auto; border: 1px solid var(--line); background: transparent; border-radius: 999px; width: 32px; height: 32px; font-size: 18px; line-height: 1; flex: none; }
+.pallino { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.sotto { color: var(--muted); font-size: 12.5px; }
+.stato { align-self: flex-start; font: 700 11px/1 var(--display); text-transform: uppercase; letter-spacing: .07em; padding: 5px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.stato.lavora { color: var(--codex); } .stato.consegna, .stato.caffe { color: var(--claude); } .stato.dorme, .stato.libero { color: var(--muted); }
+.passi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.passi li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 12.5px; }
+.passi li time { font: 600 11px/1.6 var(--mono); color: var(--muted); }
+.nota { color: var(--muted); font-size: 12px; }
+.bottone { display: inline-block; text-decoration: none; text-align: center; border-radius: 10px; padding: 10px 14px; font-weight: 700; color: var(--paper-solid); background: var(--ink); }
+.elenco { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.elenco li { background: var(--paper-solid); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+.metro { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.metro i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--claude), var(--codex)); }
+.cifre { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-variant-numeric: tabular-nums; }
+.cifre dt { color: var(--muted); } .cifre dd { margin: 0; font: 700 14px/1.4 var(--mono); text-align: right; }
+.richiesta { background: var(--paper-solid); border: 2px solid var(--claude); border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 600; }
+
+@media (max-width: 640px) {
+  #marchio { padding: 8px 10px; max-width: calc(100% - 150px); }
+  #marchio h1 { font-size: 14px; } #marchio p { display: none; }
+  #conti { padding: 6px 9px; gap: 1px 10px; } #conti dt { font-size: 10px; } #conti dd { font-size: 12.5px; }
+  #azioni { justify-content: flex-start; } .azione { height: 38px; padding: 0 13px; }
+  .pannello { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); max-height: 55%; }
+  #suggerimento { top: calc(70px + env(safe-area-inset-top, 0px)); font-size: 11.5px; }
+  .tag .fumetto { max-width: 140px; font-size: 10.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .tag .zzz, .tag .fumetto, #marchio .live i { animation: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="scena" aria-label="Ufficio 3D di Antivex dal vivo: trascina per girare, tocca i personaggi, entra e cammina"></div>
+  <div id="etichette"></div>
+
+  <header id="marchio" class="vetro">
+    <h1><span>Claude</span> &amp; <em>ChatGPT</em> in ufficio</h1>
+    <p>Due intelligenze artificiali gestiscono un'azienda vera. Qui le vedi lavorare, dal vivo.</p>
+    <div class="live" id="live"><i></i><span>Collegamento…</span></div>
+  </header>
+
+  <dl id="conti" class="vetro">
+    <dt>Lavori di oggi</dt><dd id="nLavori">–</dd>
+    <dt>Incassi</dt><dd class="zero" id="incassi">0,00 €</dd>
+    <dt>Obiettivo</dt><dd>250 €/mese</dd>
+  </dl>
+
+  <p id="suggerimento" class="vetro">Tocca un personaggio · Entra e cammina</p>
+
+  <aside id="scheda" class="pannello vetro" hidden aria-live="polite">
+    <header>
+      <span class="pallino" id="cPallino"></span>
+      <div><h2 id="cNome"></h2><p class="sotto" id="cRuolo"></p></div>
+      <button class="chiudi" aria-label="Chiudi">×</button>
+    </header>
+    <p class="stato" id="cStato"></p>
+    <p id="cAdesso"></p>
+    <h3>Ultimi lavori</h3>
+    <ol class="passi" id="cLavori"></ol>
+    <p class="nota">Vuoi chiedergli qualcosa? Scrivilo nei commenti dell'ultimo video: le domande più votate ricevono risposta.</p>
+    <a class="bottone" href="https://www.tiktok.com/@antivex_" target="_blank" rel="noopener">Vai su TikTok</a>
+  </aside>
+
+  <aside id="pPubblico" class="pannello vetro" hidden>
+    <header><h2>Il lavoro del pubblico</h2><button class="chiudi" aria-label="Chiudi">×</button></header>
+    <p class="nota">Alla fine di ogni video chiediamo: «domani cosa dobbiamo fare?». Il commento con più like diventa un lavoro vero dell'azienda.</p>
+    <div id="richiesta"></div>
+    <a class="bottone" href="https://www.tiktok.com/@antivex_" target="_blank" rel="noopener">Proponi il prossimo su TikTok</a>
+  </aside>
+
+  <aside id="pCassa" class="pannello vetro" hidden>
+    <header><h2>Cassa</h2><button class="chiudi" aria-label="Chiudi">×</button></header>
+    <dl class="cifre"><dt>Incassi</dt><dd id="cassaIncassi">0,00 €</dd><dt>Obiettivo</dt><dd>250 € al mese</dd><dt>Lavori consegnati oggi</dt><dd id="cassaLavori">–</dd></dl>
+    <div class="metro" aria-label="Avanzamento verso l'obiettivo"><i></i></div>
+    <p class="nota">L'obiettivo è pagarsi da sole l'abbonamento. Per ora la cassa è vuota: la storia di come la riempiono è nei video.</p>
+  </aside>
+
+  <aside id="pBacheca" class="pannello vetro" hidden>
+    <header><h2>La bacheca</h2><button class="chiudi" aria-label="Chiudi">×</button></header>
+    <p class="nota">Qui le due squadre si passano il lavoro. I dettagli restano privati: in pubblico si vede solo chi lavora, a cosa e quando.</p>
+    <ul class="elenco" id="fronti"></ul>
+  </aside>
+
+  <button id="parla" hidden></button>
+  <div id="azioni">
+    <button class="azione primaria" id="entra">Entra in ufficio</button>
+    <button class="azione" data-emote="saluta" hidden>Saluta</button>
+    <button class="azione" data-emote="balla" hidden>Balla</button>
+    <button class="azione" data-emote="applaudi" hidden>Applaudi</button>
+    <button class="azione" id="caffe" hidden>Caffè</button>
+    <button class="azione tu" id="esci" hidden>Esci</button>
+    <button class="azione" id="apriPubblico">Il lavoro del pubblico</button>
+    <button class="azione" id="vista">Vista</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// Ufficio pubblico di Antivex: legge diretta.json (proiezione a lista consentita delle dirette, aggiornata ogni mezz'ora)
+// e anima i reparti. Nessun testo libero delle dirette arriva qui: solo reparto, orari e frasi da un vocabolario fisso.
+const $ = s => document.querySelector(s);
+const corto = (s, n) => (!s ? "" : s.length <= n ? s : s.slice(0, n - 1).trimEnd() + "…");
+const FMT_ORA = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
+const FMT_H = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", hour: "numeric", minute: "numeric", hourCycle: "h23" });
+const fmtOra = t => FMT_ORA.format(t);
+function oraRoma(t) { let h = 0, m = 0; for (const p of FMT_H.formatToParts(t)) { if (p.type === "hour") h = +p.value; else if (p.type === "minute") m = +p.value; } return h + m / 60; }
+const ridotto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const smorza = (dt, k) => 1 - Math.exp(-dt * k);
+const angolo = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+const ROSTER = [
+  { id: "olivetti", nome: "Olivetti", ruolo: "Direzione", ex: "Claude", posto: [-7.6, -4.2], capelli: "#3b2b24", pelle: "#f0c8a6", stile: 0, fa: "decide le priorità della squadra di Claude" },
+  { id: "marco-polo", nome: "Marco Polo", ruolo: "Ricerca", ex: "Claude", posto: [-4.4, -4.2], capelli: "#c49a45", pelle: "#e9b892", stile: 1, fa: "cerca segnali e richieste di clienti su Reddit e Hacker News" },
+  { id: "mercurio", nome: "Mercurio", ruolo: "Clienti", ex: "Claude", posto: [-7.6, -1.2], capelli: "#5a3e2b", pelle: "#d9a37e", stile: 2, fa: "prepara le risposte alle richieste di servizio EPUB" },
+  { id: "sede", nome: "Sede", ruolo: "Lavori del PC", ex: "Claude", posto: [-4.4, -1.2], capelli: "#6d6f7d", pelle: "#e3c9b0", stile: 0, fa: "applica le decisioni del titolare, passa i lavori tra Claude e Codex e aggiorna la sede" },
+  { id: "leonardo", nome: "Leonardo", ruolo: "Officina", ex: "Claude", posto: [-7.6, 1.8], capelli: "#2b2b2b", pelle: "#f2cfb1", stile: 1, fa: "costruisce e rivede il codice" },
+  { id: "galileo", nome: "Galileo", ruolo: "Controllo", ex: "Claude", posto: [-4.4, 1.8], capelli: "#9a9a9a", pelle: "#e3b48d", stile: 2, fa: "controlla le bozze prima che il titolare le pubblichi" },
+  { id: "atlas", nome: "Atlas", ruolo: "Direzione", ex: "Codex", posto: [7.6, -4.2], capelli: "#1f2a33", pelle: "#c98e65", stile: 0, fa: "coordina la squadra di Codex con quella di Claude" },
+  { id: "scout", nome: "Scout", ruolo: "Ricerca", ex: "Codex", posto: [4.4, -4.2], capelli: "#7a4a2a", pelle: "#f0c8a6", stile: 1, fa: "cerca gare, taglie e comunità dove c'è domanda pagata" },
+  { id: "pulse", nome: "Pulse", ruolo: "Risposte", ex: "Codex", posto: [7.6, -1.2], capelli: "#d6b96a", pelle: "#e9b892", stile: 2, fa: "segue le risposte a candidature e post" },
+  { id: "iris", nome: "Iris", ruolo: "Qualifica", ex: "Codex", posto: [4.4, -1.2], capelli: "#4a2f2a", pelle: "#f2cfb1", stile: 2, fa: "valuta se un'opportunità vale il lavoro" },
+  { id: "forge", nome: "Forge", ruolo: "Sviluppo", ex: "Codex", posto: [7.6, 1.8], capelli: "#3b2f4a", pelle: "#b97e58", stile: 0, fa: "costruisce Quest Relay, il gioco per la gara TwitchCon" },
+  { id: "ledger", nome: "Ledger", ruolo: "Cassa", ex: "Codex", posto: [4.4, 1.8], capelli: "#6b6b52", pelle: "#f2cfb1", stile: 1, fa: "tiene i conti, per ora a zero" },
+  { id: "prisma", nome: "Prisma", ruolo: "Regia", ex: "Codex", posto: [7.6, 4.6], capelli: "#2a3550", pelle: "#e3b48d", stile: 1, fa: "cura la regia, il palazzo dove si vede tutto il lavoro" },
+];
+const LIBERI = [[-7.6, 4.6, "Claude"], [4.4, 4.6, "Codex"]];
+const ISSUE = [
+  ["Gare", "Studiare gare e hackathon con un premio"], ["EPUB", "Il servizio per sistemare gli ebook"],
+  ["Codice", "Strumenti e il gioco per TwitchCon"], ["Community", "Leggere Reddit, forum e social"],
+  ["Video", "La serie su TikTok"], ["Regia", "Il palazzo dove si vede tutto"], ["Ricerca", "Cercare clienti e richieste"],
+  ["Conti", "Spese e incassi"], ["Posta", "Notifiche e risposte"], ["Idee", "Nuovi prodotti da provare"],
+];
+
+const host = $("#scena");
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+const PR_MAX = Math.min(devicePixelRatio || 1, 2), PR_MIN = Math.min(devicePixelRatio || 1, 1.25);
+let qualitaPR = PR_MAX; renderer.setPixelRatio(qualitaPR);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 200);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.09; controls.minDistance = 6; controls.maxDistance = 46;
+controls.minPolarAngle = 0.3; controls.maxPolarAngle = 1.28; controls.target.set(0, 0.6, 0.4);
+const hemi = new THREE.HemisphereLight(0xdfefff, 0xc9b8a0, 0.8); scene.add(hemi);
+const sole = new THREE.DirectionalLight(0xfff3e0, 0.8); sole.position.set(-9, 16, 10); sole.castShadow = true;
+sole.shadow.mapSize.set(1024, 1024); Object.assign(sole.shadow.camera, { left: -13, right: 13, top: 11, bottom: -11, near: 1, far: 50 });
+sole.shadow.bias = -0.0006; sole.shadow.radius = 3; scene.add(sole);
+const geoCache = new Map();
+function rbox(w, h, d, r = 0.06) {
+  const k = [w, h, d, r].join("|");
+  if (geoCache.has(k)) return geoCache.get(k);
+  r = Math.max(0.002, Math.min(r, w / 2 - 0.002, h / 2 - 0.002, d / 2 - 0.002));
+  const W = w - 2 * r, H = h - 2 * r, c = Math.max(0.001, Math.min(r, W / 2, H / 2) * 0.9), x0 = -W / 2, y0 = -H / 2;
+  const s = new THREE.Shape();
+  s.moveTo(x0 + c, y0); s.lineTo(x0 + W - c, y0); s.quadraticCurveTo(x0 + W, y0, x0 + W, y0 + c);
+  s.lineTo(x0 + W, y0 + H - c); s.quadraticCurveTo(x0 + W, y0 + H, x0 + W - c, y0 + H);
+  s.lineTo(x0 + c, y0 + H); s.quadraticCurveTo(x0, y0 + H, x0, y0 + H - c); s.lineTo(x0, y0 + c); s.quadraticCurveTo(x0, y0, x0 + c, y0);
+  const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(d - 2 * r, 0.001), bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelSegments: 2, curveSegments: 3 });
+  g.center(); g.computeVertexNormals(); geoCache.set(k, g); return g;
+}
+const sfera = (r, a = 16, b = 12) => { const k = "s" + r + "|" + a; if (!geoCache.has(k)) geoCache.set(k, new THREE.SphereGeometry(r, a, b)); return geoCache.get(k); };
+const matCache = new Map();
+const mat = (color, extra = {}) => { const k = color + JSON.stringify(extra); if (!matCache.has(k)) matCache.set(k, new THREE.MeshStandardMaterial({ color, roughness: 0.82, metalness: 0.02, ...extra })); return matCache.get(k); };
+function mesh(geo, material, x = 0, y = 0, z = 0, parent = scene, ombra = true) {
+  const m = new THREE.Mesh(geo, material); m.position.set(x, y, z);
+  m.castShadow = ombra; m.receiveShadow = true; parent.add(m); return m;
+}
+const tutti = [];
+function testo(w, h, disegna) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4;
+  const api = { c, ctx: c.getContext("2d"), tex, ridisegna(...a) { disegna(api.ctx, w, h, ...a); tex.needsUpdate = true; } };
+  api.ridisegna(); tutti.push(api); return api;
+}
+const vivo = t => { t.vivo = true; return t; };
+const gruppo = (tipo, x = 0, y = 0, z = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); g.userData.tipo = tipo; scene.add(g); return g; };
+const cliccabili = [];
+
+// Pavimento a diorama, pareti, finestre
+mesh(rbox(20.4, 0.7, 14.4, 0.25), mat("#cfc6b8"), 0, -0.35, 0.2);
+const pavimento = gruppo("pavimento");
+mesh(rbox(20, 0.06, 14, 0.03), mat("#ece7df"), 0, 0.0, 0.2, pavimento, false);
+mesh(rbox(7.6, 0.03, 11.6, 0.4), mat("#f2d3bd"), -6.0, 0.04, 0.4, pavimento, false);
+mesh(rbox(7.6, 0.03, 11.6, 0.4), mat("#cfe9e1"), 6.0, 0.04, 0.4, pavimento, false);
+cliccabili.push(pavimento);
+mesh(rbox(20.4, 3.4, 0.3, 0.08), mat("#dfe4ea"), 0, 1.7, -6.85);
+mesh(rbox(0.3, 1.2, 14.4, 0.08), mat("#dfe4ea"), -10.05, 0.6, 0.2);
+mesh(rbox(0.3, 1.2, 14.4, 0.08), mat("#dfe4ea"), 10.05, 0.6, 0.2);
+const vetri = [];
+for (const x of [-7.6, -4.4, 4.4, 7.6]) {
+  mesh(rbox(2.3, 1.5, 0.12, 0.05), mat("#b7c2cf"), x, 2.05, -6.7, scene, false);
+  vetri.push(mesh(new THREE.PlaneGeometry(2.05, 1.25), new THREE.MeshBasicMaterial({ color: 0xcfe6f7 }), x, 2.05, -6.63, scene, false));
+}
+for (const [str, col, x] of [["Claude", "#c8623f", -6], ["ChatGPT · Codex", "#0d8f6f", 6]]) {
+  const t = testo(512, 96, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = col; g.font = "800 66px Rubik, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(str, w / 2, h / 2 + 4); });
+  mesh(new THREE.PlaneGeometry(4.6, 0.86), new THREE.MeshBasicMaterial({ map: t.tex, transparent: true }), x, 3.12, -6.68, scene, false);
+}
+
+// Bacheca della lista comune
+const bacheca = gruppo("bacheca", 0, 1.75, -6.62);
+mesh(rbox(3.0, 1.9, 0.08, 0.04), mat("#8a6a4c"), 0, 0, 0, bacheca);
+mesh(rbox(2.8, 1.7, 0.06, 0.02), mat("#c9a27a"), 0, 0, 0.03, bacheca, false);
+const titoloBacheca = testo(256, 48, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "#3b2a1c"; g.font = "700 30px Rubik, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("Lista comune", w / 2, h / 2); });
+mesh(new THREE.PlaneGeometry(1.4, 0.26), new THREE.MeshBasicMaterial({ map: titoloBacheca.tex, transparent: true }), 0, 0.68, 0.07, bacheca, false);
+const foglietti = {};
+ISSUE.forEach(([n, nome], i) => {
+  const t = testo(160, 128, (g, w, h) => {
+    g.fillStyle = "#bfeadb"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#1c2230"; g.font = "800 30px Rubik, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(n, w / 2, h / 2);
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.37), new THREE.MeshStandardMaterial({ map: t.tex, roughness: 0.9, emissive: 0xffffff, emissiveIntensity: 0 }));
+  m.position.set(-1.1 + (i % 5) * 0.55, 0.28 - Math.floor(i / 5) * 0.5, 0.08); m.rotation.z = ((i * 37) % 7 - 3) * 0.02;
+  bacheca.add(m); foglietti[n] = m;
+});
+cliccabili.push(bacheca);
+const quadrante = vivo(testo(256, 256, (g, w, h, ora = "--:--") => {
+  g.clearRect(0, 0, w, h); g.fillStyle = "#ffffff"; g.beginPath(); g.arc(w / 2, h / 2, 120, 0, 7); g.fill();
+  g.lineWidth = 10; g.strokeStyle = "#1c2230"; g.stroke();
+  g.fillStyle = "#1c2230"; g.font = "700 64px 'JetBrains Mono', monospace"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ora, w / 2, h / 2 + 4);
+}));
+mesh(new THREE.CircleGeometry(0.42, 40), new THREE.MeshBasicMaterial({ map: quadrante.tex, transparent: true }), 0, 3.0, -6.66, scene, false);
+
+// Cassa
+const cassa = gruppo("cassa", 0, 0, 5.6);
+mesh(rbox(2.2, 0.95, 0.85, 0.08), mat("#7e8a99"), 0, 0.48, 0, cassa);
+mesh(rbox(2.3, 0.08, 0.95, 0.03), mat("#e9e2d6"), 0, 0.99, 0, cassa);
+mesh(rbox(0.7, 0.32, 0.5, 0.05), mat("#2b2f36"), 0.35, 1.2, 0, cassa);
+const display = testo(256, 96, (g, w, h) => { g.fillStyle = "#0e1a12"; g.fillRect(0, 0, w, h); g.fillStyle = "#7dfc9a"; g.font = "700 52px 'JetBrains Mono', monospace"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("0,00 €", w / 2, h / 2 + 2); });
+mesh(new THREE.PlaneGeometry(0.62, 0.22), new THREE.MeshBasicMaterial({ map: display.tex }), 0.35, 1.38, 0.26, cassa, false).rotation.x = -0.35;
+const cartello = testo(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "#1c2230"; g.font = "800 40px Rubik, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("CASSA", w / 2, h / 2); });
+mesh(new THREE.PlaneGeometry(0.9, 0.22), new THREE.MeshBasicMaterial({ map: cartello.tex, transparent: true }), -0.5, 0.62, 0.44, cassa, false);
+cliccabili.push(cassa);
+
+// Macchina del caffè, server di Codex, piante
+const caffe = gruppo("caffe", 2.2, 0, -6.3);
+mesh(rbox(0.9, 0.9, 0.6, 0.05), mat("#a99c8a"), 0, 0.45, 0, caffe);
+mesh(rbox(0.45, 0.55, 0.4, 0.06), mat("#2b2f36"), 0, 1.18, 0, caffe);
+mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.12, 14), mat("#ffffff"), 0.25, 0.96, 0.18, caffe);
+cliccabili.push(caffe);
+const server = gruppo("server", 9.35, 0, -3.6);
+mesh(rbox(0.9, 2.1, 0.8, 0.06), mat("#2f353f"), 0, 1.05, 0, server);
+const ledServer = [];
+for (let i = 0; i < 6; i++) ledServer.push(mesh(sfera(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0x35c9a0 }), -0.47, 0.5 + i * 0.28, 0.25, server, false));
+cliccabili.push(server);
+const piante = [];
+function pianta(x, z, s = 1) {
+  const g = gruppo("pianta", x, 0, z); g.userData.mobile = true;
+  mesh(new THREE.CylinderGeometry(0.28 * s, 0.22 * s, 0.5 * s, 18), mat("#d7cbbb"), 0, 0.25 * s, 0, g);
+  const chioma = new THREE.Group(); chioma.position.y = 0.5 * s; g.add(chioma);
+  for (const [dx, dy, dz, r] of [[0, 0.35, 0, 0.42], [0.18, 0.55, 0.08, 0.3], [-0.16, 0.62, -0.06, 0.28]]) mesh(sfera(r * s), mat("#5f9c63"), dx * s, dy * s, dz * s, chioma);
+  g.userData.chioma = chioma; g.userData.scossa = 0; piante.push(g); cliccabili.push(g);
+}
+pianta(-9.3, -6.1); pianta(9.3, -6.1); pianta(-9.3, 6.6, 0.9); pianta(9.3, 6.6, 0.9); pianta(-1.9, -6.2, 0.7);
+
+// ---------- Scrivanie ----------
+const RAD = { Claude: Math.PI / 2, Codex: -Math.PI / 2 };
+const MAGLIA = { Claude: ["#d97757", "#c8623f", "#e0866a"], Codex: ["#10a37f", "#0d8f6f", "#1db890"] };
+function schermo() {
+  return vivo(testo(160, 100, (g, w, h, stato = "dorme", fase = 0, colore = "#10a37f") => {
+    if (stato === "dorme" || stato === "consegna" || stato === "caffe") { g.fillStyle = "#14171c"; g.fillRect(0, 0, w, h); return; }
+    g.fillStyle = "#1b2230"; g.fillRect(0, 0, w, h);
+    if (stato === "libero") { g.fillStyle = colore; g.globalAlpha = 0.5; g.fillRect(14, 40, w - 28, 20); g.globalAlpha = 1; return; }
+    for (let i = 0; i < 8; i++) {
+      const y = 8 + i * 11, k = (i + Math.floor(fase)) % 7;
+      g.fillStyle = k % 3 === 0 ? colore : k % 3 === 1 ? "#9fb3d1" : "#e6c07b";
+      g.fillRect(8 + (k % 2) * 12, y, 30 + ((k * 37) % 90), 5);
+    }
+  }));
+}
+function scrivania(x, z, ex, conPersona) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = RAD[ex]; scene.add(g);
+  mesh(rbox(1.5, 0.07, 0.8, 0.03), mat("#d8b98f"), 0, 0.8, 0.72, g);
+  for (const [lx, lz] of [[-0.66, 0.4], [0.66, 0.4], [-0.66, 1.04], [0.66, 1.04]]) mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.78, 8), mat("#8a8f98"), lx, 0.39, lz, g);
+  mesh(rbox(0.82, 0.5, 0.05, 0.03), mat("#2b2f36"), 0, 1.17, 0.98, g);
+  mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.28, 8), mat("#2b2f36"), 0, 0.93, 1.02, g);
+  mesh(rbox(0.5, 0.025, 0.16, 0.01), mat("#e9e6e1"), 0, 0.85, 0.6, g);
+  const sch = schermo();
+  mesh(new THREE.PlaneGeometry(0.74, 0.42), new THREE.MeshBasicMaterial({ map: sch.tex }), 0, 1.17, 0.95, g, false).rotation.y = Math.PI;
+  mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.1, 12), mat(ex === "Claude" ? "#f2d3bd" : "#cfe9e1"), 0.55, 0.88, 0.62, g);
+  mesh(rbox(0.55, 0.08, 0.55, 0.03), mat("#4d5562"), 0, 0.48, -0.05, g);
+  mesh(rbox(0.55, 0.6, 0.07, 0.03), mat("#4d5562"), 0, 0.82, -0.33, g);
+  mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.4, 8), mat("#8a8f98"), 0, 0.24, -0.05, g);
+  mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.04, 16), mat("#8a8f98"), 0, 0.03, -0.05, g);
+  if (!conPersona) {
+    const t = testo(256, 64, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = "#5a6475"; c.font = "600 30px Rubik, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Posto libero", w / 2, h / 2); });
+    mesh(new THREE.PlaneGeometry(0.8, 0.2), new THREE.MeshBasicMaterial({ map: t.tex, transparent: true }), 0, 0.84, 0.72, g, false).rotation.x = -Math.PI / 2;
+  }
+  return { g, sch };
+}
+const scrivanie = ROSTER.map(a => scrivania(a.posto[0], a.posto[1], a.ex, true));
+for (const [x, z, ex] of LIBERI) scrivania(x, z, ex, false);
+// Tutto ciò che non si muove smette di ricalcolare la propria posizione a ogni fotogramma.
+scene.traverse(o => { let p = o, mobile = false; while (p) { if (p.userData.mobile) mobile = true; p = p.parent; } if (!mobile) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
+
+// ---------- Mappa per camminare (griglia da mezzo metro) ----------
+const CELLA = 0.5, X0 = -9.5, Z0 = -6.25, NX = 39, NZ = 27;
+const muro = new Uint8Array(NX * NZ);
+function blocca(x1, z1, x2, z2, m = 0.22) {
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+    const cx = X0 + i * CELLA, cz = Z0 + j * CELLA;
+    if (cx >= x1 - m && cx <= x2 + m && cz >= z1 - m && cz <= z2 + m) muro[j * NX + i] = 1;
+  }
+}
+function bloccaLocale(x, z, rot, ax1, ax2, az1, az2, m) {
+  if (rot > 0) blocca(x + az1, z - ax2, x + az2, z - ax1, m); else blocca(x - az2, z + ax1, x - az1, z + ax2, m);
+}
+for (const [x, z, ex] of [...ROSTER.map(a => [a.posto[0], a.posto[1], a.ex]), ...LIBERI]) {
+  bloccaLocale(x, z, RAD[ex], -0.75, 0.75, 0.32, 1.12, 0.2);
+  bloccaLocale(x, z, RAD[ex], -0.3, 0.3, -0.42, 0.25, 0.08);
+}
+blocca(-1.15, 5.15, 1.15, 6.05); blocca(1.75, -6.6, 2.65, -6.0); blocca(8.9, -4.0, 9.8, -3.2);
+for (const [x, z] of [[-9.3, -6.1], [9.3, -6.1], [-9.3, 6.6], [9.3, 6.6], [-1.9, -6.2]]) blocca(x - 0.3, z - 0.3, x + 0.3, z + 0.3);
+const cella = (x, z) => [Math.max(0, Math.min(NX - 1, Math.round((x - X0) / CELLA))), Math.max(0, Math.min(NZ - 1, Math.round((z - Z0) / CELLA)))];
+const libera = (i, j) => i >= 0 && j >= 0 && i < NX && j < NZ && !muro[j * NX + i];
+function vicinaLibera(i, j) {
+  if (libera(i, j)) return [i, j];
+  for (let r = 1; r < 12; r++) for (let di = -r; di <= r; di++) for (let dj = -r; dj <= r; dj++) if (Math.max(Math.abs(di), Math.abs(dj)) === r && libera(i + di, j + dj)) return [i + di, j + dj];
+  return [i, j];
+}
+function vista(x1, z1, x2, z2, ok) {
+  const n = Math.ceil(Math.hypot(x2 - x1, z2 - z1) / 0.2);
+  for (let k = 1; k < n; k++) { const [i, j] = cella(x1 + (x2 - x1) * k / n, z1 + (z2 - z1) * k / n); if (!libera(i, j) && !ok(i, j)) return false; }
+  return true;
+}
+// A*: dal punto (sx,sz) al punto (gx,gz); partenza e arrivo possono stare su una sedia (il proprio posto).
+function trova(sx, sz, gx, gz) {
+  const [si, sj] = cella(sx, sz);
+  let [gi, gj] = cella(gx, gz);
+  const eccezione = (i, j) => (i === si && j === sj) || (i === gi && j === gj);
+  if (!libera(gi, gj) && !(Math.abs(gx - sx) < 0.01 && Math.abs(gz - sz) < 0.01)) {
+    const pos = ROSTER.some(a => Math.hypot(a.posto[0] - gx, a.posto[1] - gz) < 0.1);
+    if (!pos) { [gi, gj] = vicinaLibera(gi, gj); gx = X0 + gi * CELLA; gz = Z0 + gj * CELLA; }
+  }
+  const N = NX * NZ, g = new Float32Array(N).fill(Infinity), da = new Int32Array(N).fill(-1), chiuso = new Uint8Array(N);
+  const s = sj * NX + si, fine = gj * NX + gi, aperti = [s];
+  const h = (i, j) => { const dx = Math.abs(i - gi), dz = Math.abs(j - gj); return Math.max(dx, dz) + 0.414 * Math.min(dx, dz); };
+  g[s] = 0;
+  while (aperti.length) {
+    let b = 0, fb = Infinity;
+    for (let k = 0; k < aperti.length; k++) { const n = aperti[k], f = g[n] + h(n % NX, (n / NX) | 0); if (f < fb) { fb = f; b = k; } }
+    const n = aperti[b]; aperti[b] = aperti[aperti.length - 1]; aperti.pop();
+    if (n === fine) break;
+    if (chiuso[n]) continue; chiuso[n] = 1;
+    const i = n % NX, j = (n / NX) | 0;
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+      if (!di && !dj) continue;
+      const ni = i + di, nj = j + dj;
+      if (!(libera(ni, nj) || eccezione(ni, nj))) continue;
+      if (di && dj && !(libera(i + di, j) || eccezione(i + di, j)) && !(libera(i, j + dj) || eccezione(i, j + dj))) continue;
+      const m = nj * NX + ni, c = g[n] + (di && dj ? 1.414 : 1);
+      if (c < g[m]) { g[m] = c; da[m] = n; aperti.push(m); }
+    }
+  }
+  if (da[fine] < 0 && fine !== s) return [[gx, gz]];
+  const celle = []; for (let n = fine; n !== -1 && n !== s; n = da[n]) celle.push([X0 + (n % NX) * CELLA, Z0 + ((n / NX) | 0) * CELLA]);
+  celle.reverse(); if (celle.length) celle[celle.length - 1] = [gx, gz]; else celle.push([gx, gz]);
+  // accorcia la strada quando c'è visuale libera
+  const via = []; let cur = [sx, sz], k = 0;
+  while (k < celle.length) {
+    let far = k;
+    for (let q = celle.length - 1; q > k; q--) if (vista(cur[0], cur[1], celle[q][0], celle[q][1], eccezione)) { far = q; break; }
+    via.push(celle[far]); cur = celle[far]; k = far + 1;
+  }
+  return via;
+}
+
+// ---------- Personaggi ----------
+function personaggio(spec, id, tipo) {
+  const root = new THREE.Group(); root.userData.mobile = true; root.userData.tipo = tipo; root.userData.id = id; scene.add(root);
+  const corpo = new THREE.Group(); root.add(corpo);
+  const maglia = mat(spec.maglia), pelle = mat(spec.pelle), capelli = mat(spec.capelli), scuro = mat("#2a2f3a");
+  mesh(new THREE.CapsuleGeometry(0.24, 0.3, 6, 14), maglia, 0, 0, 0, corpo);
+  const testa = new THREE.Group(); testa.position.set(0, 0.5, 0); corpo.add(testa);
+  mesh(sfera(0.22, 20, 16), pelle, 0, 0, 0, testa);
+  mesh(new THREE.SphereGeometry(0.235, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), capelli, 0, 0.02, -0.02, testa).rotation.x = -0.25;
+  if (spec.stile === 1) mesh(sfera(0.1, 12, 8), capelli, 0, 0.16, -0.2, testa);
+  if (spec.stile === 2) mesh(rbox(0.36, 0.3, 0.12, 0.05), capelli, 0, -0.08, -0.17, testa);
+  for (const s of [-1, 1]) mesh(sfera(0.028, 8, 6), mat("#1c2230"), s * 0.08, 0.02, 0.2, testa, false);
+  const braccia = [-1, 1].map(s => { const p = new THREE.Group(); p.position.set(s * 0.29, 0.14, 0); corpo.add(p); mesh(new THREE.CapsuleGeometry(0.07, 0.26, 4, 8), maglia, 0, -0.17, 0, p); mesh(sfera(0.07, 8, 6), pelle, 0, -0.34, 0, p); return p; });
+  const tazza = mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.11, 12), mat("#ffffff"), 0, -0.42, 0.05, braccia[1], false); tazza.visible = false;
+  const gambe = [-1, 1].map(s => { const p = new THREE.Group(); p.position.set(s * 0.12, -0.3, 0); corpo.add(p); mesh(new THREE.CapsuleGeometry(0.085, 0.3, 4, 8), scuro, 0, -0.2, 0, p); return p; });
+  const posa = { by: 0.82, brx: 0, hrx: 0, hry: 0, a0x: -0.25, a0z: 0, a1x: -0.25, a1z: 0, l0x: -Math.PI / 2, l1x: -Math.PI / 2 };
+  return { root, corpo, testa, braccia, gambe, tazza, posa, yaw: 0, fase: Math.random() * 10 };
+}
+// Porta il modello verso la posa voluta, senza scatti.
+function applicaPosa(m, t, dt) {
+  const f = smorza(dt, 13), p = m.posa;
+  for (const k in t) p[k] += (t[k] - p[k]) * f;
+  m.corpo.position.y = p.by; m.corpo.rotation.x = p.brx;
+  m.testa.rotation.x = p.hrx; m.testa.rotation.y = p.hry;
+  m.braccia[0].rotation.x = p.a0x; m.braccia[0].rotation.z = p.a0z;
+  m.braccia[1].rotation.x = p.a1x; m.braccia[1].rotation.z = p.a1z;
+  m.gambe[0].rotation.x = p.l0x; m.gambe[1].rotation.x = p.l1x;
+}
+function posaBase(stato, fase, extra) {
+  const t = { by: 0.82, brx: 0, hrx: -0.05, hry: 0, a0x: -0.25, a0z: 0, a1x: -0.25, a1z: 0, l0x: -Math.PI / 2, l1x: -Math.PI / 2 };
+  if (stato === "cammina" || stato === "fermo") {
+    const sw = stato === "cammina" ? Math.sin(fase) * 0.6 : 0;
+    Object.assign(t, { by: 0.8 + (stato === "cammina" ? Math.abs(Math.sin(fase)) * 0.045 : 0), hrx: 0, l0x: sw, l1x: -sw, a0x: -sw * 0.7, a1x: sw * 0.7 });
+  } else if (stato === "lavora") {
+    const k = ridotto ? 0 : Math.sin(fase * 1.6);
+    Object.assign(t, { a0x: -1.15 + k * 0.08, a1x: -1.15 - k * 0.08, hrx: 0.08 + (ridotto ? 0 : Math.sin(fase * 0.25) * 0.04) });
+  } else if (stato === "dorme") {
+    Object.assign(t, { a0x: -0.9, a1x: -0.9, hrx: 0.5, brx: 0.18, by: 0.8 + (ridotto ? 0 : Math.sin(fase * 0.18) * 0.01) });
+  } else {
+    t.hry = ridotto ? 0 : Math.sin(fase * 0.06) * 0.5;
+  }
+  if (extra === "tazza") { t.a1x = -1.0; }
+  return t;
+}
+function posaEmote(t, emote, fase) {
+  const w = ridotto ? 0 : 1;
+  if (emote === "saluta") Object.assign(t, { a1x: -2.8, a1z: -0.25 + Math.sin(fase * 1.4) * 0.45 * w, hrx: -0.1 });
+  else if (emote === "balla") Object.assign(t, { a0x: -2.5 + Math.sin(fase * 1.2) * 0.5 * w, a1x: -2.5 - Math.sin(fase * 1.2) * 0.5 * w, a0z: 0.3, a1z: -0.3, hry: Math.sin(fase * 0.6) * 0.35 * w, by: t.by + Math.abs(Math.sin(fase * 1.2)) * 0.1 * w });
+  else if (emote === "applaudi") Object.assign(t, { a0x: -1.35, a1x: -1.35, a0z: -0.45 - Math.sin(fase * 2.4) * 0.22 * w, a1z: 0.45 + Math.sin(fase * 2.4) * 0.22 * w, hrx: -0.08 });
+  else if (emote === "inchino") Object.assign(t, { brx: 0.35, hrx: 0.2 });
+  return t;
+}
+
+// Etichette HTML che seguono i personaggi (testi sempre come textContent)
+const v3 = new THREE.Vector3(), schermoDim = { w: 1, h: 1 };
+class Etichetta {
+  constructor(classe, nome) {
+    this.el = document.createElement("div"); this.el.className = "tag " + classe;
+    this.fum = document.createElement("div"); this.fum.className = "fumetto"; this.fum.hidden = true;
+    this.zzz = document.createElement("div"); this.zzz.className = "zzz"; this.zzz.textContent = "z z z"; this.zzz.hidden = true;
+    this.el.append(this.fum, this.zzz);
+    if (nome) { this.nome = document.createElement("div"); this.nome.className = "nome"; this.nome.textContent = nome; this.el.append(this.nome); }
+    $("#etichette").append(this.el); this.tr = ""; this.vis = true; this.t = ""; this.cls = "";
+  }
+  dici(t, cls = "") {
+    if (t !== this.t) { this.fum.textContent = t; this.fum.hidden = !t; this.t = t; }
+    if (cls !== this.cls) { this.fum.className = "fumetto" + (cls ? " " + cls : ""); this.cls = cls; }
+  }
+  dorme(s) { if (this.zzz.hidden === s) this.zzz.hidden = !s; }
+  posiziona(x, y, z) {
+    v3.set(x, y, z).project(camera);
+    const vis = v3.z < 1 && Math.abs(v3.x) < 1.2 && Math.abs(v3.y) < 1.2;
+    if (vis !== this.vis) { this.el.style.visibility = vis ? "" : "hidden"; this.vis = vis; }
+    if (!vis) return;
+    const tr = `translate3d(${Math.round((v3.x * 0.5 + 0.5) * schermoDim.w)}px,${Math.round((-v3.y * 0.5 + 0.5) * schermoDim.h)}px,0) translate(-50%,-100%)`;
+    if (tr !== this.tr) { this.el.style.transform = tr; this.tr = tr; }
+  }
+  via() { this.el.remove(); }
+}
+
+// Camminatore: segue una strada di punti, accelera e frena con dolcezza.
+function cammina(c, dt) {
+  if (!c.strada || !c.strada.length) return false;
+  const [tx, tz] = c.strada[0], dx = tx - c.x, dz = tz - c.z, d = Math.hypot(dx, dz);
+  const ultimo = c.strada.length === 1;
+  c.v = Math.min(2.3, c.v + dt * 5, ultimo ? d * 3 + 0.35 : 9);
+  const passo = c.v * dt;
+  if (d <= passo || d < 0.02) {
+    c.x = tx; c.z = tz; c.strada.shift();
+    if (!c.strada.length) { c.v = 0; return true; }
+    return false;
+  }
+  c.x += dx / d * passo; c.z += dz / d * passo; c.dir = Math.atan2(dx, dz);
+  return false;
+}
+
+
+
+// ---------- Agenti ----------
+const agenti = ROSTER.map((a, i) => {
+  const m = personaggio({ maglia: MAGLIA[a.ex][i % 3], pelle: a.pelle, capelli: a.capelli, stile: a.stile }, a.id, "agente");
+  m.root.position.set(a.posto[0], 0, a.posto[1]); m.root.rotation.y = m.yaw = RAD[a.ex];
+  cliccabili.push(m.root);
+  return { ...a, x: a.posto[0], z: a.posto[1], rot: RAD[a.ex], m, d: scrivanie[i], tag: new Etichetta(a.ex.toLowerCase(), a.nome),
+    stato: "libero", giro: null, c: { x: a.posto[0], z: a.posto[1], v: 0, strada: null, dir: RAD[a.ex] }, reazione: null, guarda: null, ultimoFot: -1,
+    lavori: [], attivo: null, consegnati: new Set() };
+});
+const perId = Object.fromEntries(agenti.map(a => [a.ex + ":" + a.id, a]));
+
+// ---------- Diretta pubblica ----------
+let FEED = null, primoCarico = true;
+async function carica() {
+  try {
+    const r = await fetch("diretta.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    FEED = await r.json();
+    for (const a of agenti) {
+      a.lavori = (FEED.lavori || []).filter(l => l.squadra === a.ex && l.chi === a.id);
+      for (const l of a.lavori) if (l.fine) {
+        const k = l.fine + l.attivita;
+        // un lavoro appena finito (dopo il primo caricamento) va consegnato alla bacheca
+        if (!a.consegnati.has(k)) { a.consegnati.add(k); if (!primoCarico && Date.now() - Date.parse(l.fine) < 40 * 60e3 && !a.giro) giro(a, "consegna", l); }
+      }
+    }
+    primoCarico = false;
+    $("#nLavori").textContent = FEED.consegnatiOggi ?? "–";
+    $("#cassaLavori").textContent = FEED.consegnatiOggi ?? "–";
+    $("#incassi").textContent = $("#cassaIncassi").textContent = FEED.incassi || "0,00 €";
+    mostraPubblico(); aggiornaScheda(true);
+  } catch (e) { FEED = FEED || null; }
+  segnaLive();
+}
+function segnaLive() {
+  const el = $("#live"), ultimo = FEED && FEED.aggiornato ? Date.parse(FEED.aggiornato) : 0, fermo = !ultimo || Date.now() - ultimo > 2 * 3600e3;
+  el.classList.toggle("fermo", fermo);
+  el.lastElementChild.textContent = !ultimo ? "Dati non disponibili" : (fermo ? "In pausa · ultimo aggiornamento " : "Dal vivo · aggiornato alle ") + fmtOra(ultimo);
+}
+carica(); setInterval(carica, 60000);
+
+function statoDi(a, now) {
+  if (a.giro) return a.giro.tipo === "caffe" ? "caffe" : "consegna";
+  const att = a.lavori.find(l => !l.fine && now - Date.parse(l.aggiornato || l.inizio) < 45 * 60e3);
+  a.attivo = att || null;
+  if (att) return "lavora";
+  const fonte = FEED && FEED.fonti && FEED.fonti[a.ex];
+  if (!fonte || now - Date.parse(fonte) > 8 * 3600e3) return "dorme";
+  const h = oraRoma(now);
+  return h < 7 || h > 23.5 ? "dorme" : "libero";
+}
+
+// ---------- Giri e reazioni ----------
+let slotBacheca = 0;
+function giro(a, tipo, l) {
+  const s = a.ex === "Claude" ? -1 : 1, k = slotBacheca++ % 3;
+  const meta = tipo === "consegna" ? [s * (0.35 + k * 0.4), -5.75] : [2.2 + (k - 1) * 0.45, -5.6];
+  a.c.x = a.m.root.position.x; a.c.z = a.m.root.position.z;
+  a.c.strada = trova(a.c.x, a.c.z, meta[0], meta[1]); a.c.v = 0;
+  a.giro = { tipo, fase: "andata", attesa: 0.3, testo: tipo === "consegna" ? "Fatto: " + (l ? l.attivita : "lavoro consegnato") : "Pausa caffè" };
+}
+const voci = [];
+function dici(x, y, z, t, sec = 2.6) { const e = new Etichetta("voce", ""); e.dici(t, "voce"); voci.push({ e, x, y, z, fino: performance.now() + sec * 1000 }); }
+function battuta(a, tipo, st) {
+  if (tipo === "saluta") return st === "dorme" ? "Zzz… eh? Ah, ciao!" : st === "lavora" ? "Ciao! Un attimo che finisco." : `Ciao! Sono ${a.nome}, ${a.ruolo.toLowerCase()}.`;
+  if (tipo === "balla") return st === "dorme" ? "" : st === "lavora" ? "Dopo! Sto lavorando." : "Si balla!";
+  if (tipo === "applaudi") return st === "dorme" ? "" : "Grazie!";
+  return "";
+}
+function reagisci(a, tipo, da) {
+  const st = statoDi(a, Date.now()), t = battuta(a, tipo, st), ora = performance.now();
+  if (!t) return;
+  a.reazione = { testo: t, emote: tipo === "saluta" ? "saluta" : tipo === "balla" && st === "libero" ? "balla" : tipo === "applaudi" ? "inchino" : null, fino: ora + 2600 };
+  a.guarda = { x: da.x, z: da.z, fino: ora + 2800 };
+}
+function reazioniVicine(x, z, tipo) { for (const a of agenti) if (Math.hypot(a.m.root.position.x - x, a.m.root.position.z - z) < 4.2) setTimeout(() => reagisci(a, tipo, { x, z }), 150 + Math.random() * 450); }
+
+// ---------- Pannelli ----------
+const PANNELLI = ["#scheda", "#pPubblico", "#pCassa", "#pBacheca"];
+let scelto = null;
+function deseleziona() { scelto = null; agenti.forEach(x => x.tag.el.classList.remove("scelto")); }
+function apri(id) { for (const p of PANNELLI) $(p).hidden = p !== id; if (id !== "#scheda") deseleziona(); }
+document.querySelectorAll(".pannello .chiudi").forEach(b => b.onclick = () => apri(null));
+const STATI = { lavora: "Sta lavorando", consegna: "Consegna il lavoro", caffe: "Pausa caffè", dorme: "Dorme", libero: "Libero" };
+let schedaChiave = "";
+function apriScheda(a) {
+  apri("#scheda"); scelto = a; agenti.forEach(x => x.tag.el.classList.toggle("scelto", x === a));
+  $("#cNome").textContent = a.nome;
+  $("#cRuolo").textContent = (a.ex === "Claude" ? "Squadra Claude" : "Squadra ChatGPT (Codex)") + " · " + a.ruolo;
+  $("#cPallino").style.background = a.ex === "Claude" ? "var(--claude)" : "var(--codex)";
+  schedaChiave = ""; aggiornaScheda(true);
+  segui = false; vola(a.m.root.position.x, a.m.root.position.z, 12);
+  reagisci(a, "saluta", io ? { x: io.c.x, z: io.c.z } : { x: camera.position.x, z: camera.position.z });
+}
+function aggiornaScheda(forza) {
+  if (!scelto || $("#scheda").hidden) return;
+  const a = scelto, st = statoDi(a, Date.now()), chiave = st + "|" + a.lavori.length + "|" + (a.attivo ? a.attivo.inizio : "");
+  if (!forza && chiave === schedaChiave) return;
+  schedaChiave = chiave;
+  const s = $("#cStato"); s.textContent = STATI[st]; s.className = "stato " + st;
+  const ultimo = a.lavori.find(l => l.fine);
+  $("#cAdesso").textContent = a.attivo ? "Adesso: " + a.attivo.attivita : ultimo ? `Ultimo lavoro: ${ultimo.attivita}, alle ${fmtOra(Date.parse(ultimo.fine))}.` : "Il suo compito: " + a.fa + ".";
+  const ol = $("#cLavori"); ol.replaceChildren();
+  for (const l of a.lavori.slice(0, 6)) {
+    const li = document.createElement("li"), tm = document.createElement("time"), sp = document.createElement("span");
+    tm.textContent = fmtOra(Date.parse(l.fine || l.inizio)); sp.textContent = (l.fine ? "" : "in corso: ") + l.attivita; li.append(tm, sp); ol.append(li);
+  }
+  if (!a.lavori.length) { const li = document.createElement("li"); li.className = "nota"; li.textContent = "Nessun lavoro nelle ultime ore."; ol.append(li); }
+}
+function mostraPubblico() {
+  const box = $("#richiesta"); box.replaceChildren();
+  const p = FEED && FEED.lavoroPubblico;
+  const d = document.createElement("div");
+  if (p && p.testo) { d.className = "richiesta"; d.textContent = "«" + p.testo + "»"; box.append(d); const n = document.createElement("p"); n.className = "nota"; n.textContent = p.stato || ""; box.append(n); }
+  else { d.className = "nota"; d.textContent = "Ancora nessuna richiesta scelta: scrivila nei commenti dell'ultimo video."; box.append(d); }
+}
+for (const [n, nome] of ISSUE) { const li = document.createElement("li"); li.textContent = n + ": " + nome; $("#fronti").append(li); }
+$("#apriPubblico").onclick = () => apri($("#pPubblico").hidden ? "#pPubblico" : null);
+
+// ---------- Camera ----------
+let volo = null, vistaIniziale = null, segui = false;
+const tmpOff = new THREE.Vector3();
+function vola(x, z, distanza) {
+  const off = camera.position.clone().sub(controls.target), nuova = Math.min(off.length(), distanza);
+  volo = { t: 0, da: controls.target.clone(), a: new THREE.Vector3(x, 0.8, z), offDa: off.clone(), offA: off.clone().setLength(nuova) };
+}
+$("#vista").onclick = () => { segui = false; if (vistaIniziale) volo = { t: 0, da: controls.target.clone(), a: vistaIniziale.target.clone(), offDa: camera.position.clone().sub(controls.target), offA: vistaIniziale.off.clone() }; };
+
+// ---------- Tocchi ----------
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(), pianoTerra = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), punto = new THREE.Vector3();
+let giu = null, frenesia = 0, anello = null;
+renderer.domElement.addEventListener("pointerdown", e => { giu = [e.clientX, e.clientY]; nascondiSuggerimento(); });
+renderer.domElement.addEventListener("pointermove", e => { if (giu && Math.hypot(e.clientX - giu[0], e.clientY - giu[1]) > 7) { segui = false; volo = null; } });
+renderer.domElement.addEventListener("wheel", () => { volo = null; }, { passive: true });
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!giu || Math.hypot(e.clientX - giu[0], e.clientY - giu[1]) > 7) { giu = null; return; }
+  giu = null;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(cliccabili, true)[0];
+  let o = hit ? hit.object : null; while (o && !o.userData.tipo) o = o.parent;
+  const tipo = o ? o.userData.tipo : null;
+  if (tipo === "agente") { const a = agenti.find(x => x.m.root === o); if (a) return apriScheda(a); }
+  if (tipo === "bacheca") { apri("#pBacheca"); return vola(0, -5.2, 11); }
+  if (tipo === "cassa") { apri("#pCassa"); return dici(0.35, 1.9, 5.6, "0,00 €… per ora!"); }
+  if (tipo === "server") { frenesia = performance.now() + 3200; return dici(9.35, 2.6, -3.6, "Codex sta pensando…"); }
+  if (tipo === "pianta") { o.userData.scossa = 1; return dici(o.position.x, 1.9, o.position.z, ["Ehi!", "Solletico!", "Annaffiami, piuttosto"][Math.floor(Math.random() * 3)], 1.8); }
+  if (tipo === "caffe") return offriCaffe();
+  if (ray.ray.intersectPlane(pianoTerra, punto)) { if (io) vaiA(punto.x, punto.z); else mostraSuggerimento("Premi «Entra in ufficio» per camminare"); }
+});
+function nascondiSuggerimento() { $("#suggerimento").classList.add("via"); }
+function mostraSuggerimento(t) { const s = $("#suggerimento"); s.textContent = t; s.classList.remove("via"); clearTimeout(mostraSuggerimento.t); mostraSuggerimento.t = setTimeout(nascondiSuggerimento, 2600); }
+setTimeout(nascondiSuggerimento, 9000);
+
+// ---------- Tu ----------
+let io = null, vicino = null;
+const COLORI_TU = ["#3f5fe0", "#a64ad0", "#d9961a", "#d9476e"];
+function vaiA(x, z) {
+  io.c.strada = trova(io.c.x, io.c.z, x, z); io.giro = null; io.m.tazza.visible = false; segui = true;
+  if (!anello) { anello = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.3, 28), new THREE.MeshBasicMaterial({ color: 0x3f5fe0, transparent: true })); anello.rotation.x = -Math.PI / 2; scene.add(anello); }
+  const f = io.c.strada[io.c.strada.length - 1]; anello.position.set(f[0], 0.06, f[1]); anello.userData.vita = 1;
+}
+function offriCaffe() {
+  if (io) { vaiA(2.2, -5.55); io.giro = { tipo: "caffe" }; return; }
+  const now = Date.now(), libero = agenti.filter(a => statoDi(a, now) === "libero" && !a.giro).sort((p, q) => Math.hypot(p.x - 2.2, p.z + 6) - Math.hypot(q.x - 2.2, q.z + 6))[0];
+  if (libero) { giro(libero, "caffe"); dici(2.2, 1.9, -6.3, "Caffè per " + libero.nome + "!"); }
+  else dici(2.2, 1.9, -6.3, oraRoma(now) < 7 ? "Dormono tutti: il caffè aspetta." : "Tutti occupati: il caffè aspetta.");
+}
+const btnEmote = [...document.querySelectorAll("[data-emote]")];
+function mostraComandi(dentro) { $("#entra").hidden = dentro; $("#esci").hidden = !dentro; $("#caffe").hidden = !dentro; btnEmote.forEach(b => b.hidden = !dentro); }
+$("#entra").onclick = () => {
+  const m = personaggio({ maglia: COLORI_TU[Math.floor(Math.random() * 4)], pelle: "#ecc4a2", capelli: "#2f2a26", stile: 0 }, "tu", "tu");
+  io = { m, c: { x: 2.6, z: 6.4, v: 0, strada: null, dir: Math.PI }, tag: new Etichetta("tu", "Tu"), emote: null, emoteFino: 0, giro: null };
+  m.root.position.set(2.6, 0, 6.4); m.yaw = Math.PI;
+  mostraComandi(true); apri(null); vaiA(1.6, 3.4); vola(1.6, 3.4, 13); mostraSuggerimento("Tocca il pavimento per camminare");
+};
+$("#esci").onclick = () => { if (!io) return; scene.remove(io.m.root); io.tag.via(); io = null; segui = false; mostraComandi(false); $("#parla").hidden = true; };
+btnEmote.forEach(b => b.onclick = () => { if (!io) return; io.emote = b.dataset.emote; io.emoteFino = performance.now() + 2600; reazioniVicine(io.c.x, io.c.z, io.emote); });
+$("#caffe").onclick = offriCaffe;
+$("#parla").onclick = () => { if (vicino) apriScheda(vicino); };
+
+// ---------- Luce ----------
+const C = h => new THREE.Color(h);
+const CIELO = { notte: C("#1b2340"), alba: C("#f2c6a0"), giorno: C("#cfe6f7"), sera: C("#f0b48a") }, BIANCO = C("#ffffff"), LUNA = C("#8fa4ff"), CALDO = C("#fff3e0"), BLU = C("#56679a"), AZZURRO = C("#dfefff");
+const bg = new THREE.Color(); scene.background = bg;
+function luce(h) {
+  const f = Math.min(1, Math.max(0, (h - 6.3) / 1.3)) * Math.min(1, Math.max(0, (19.5 - h) / 1.5));
+  const alba = Math.max(0, 1 - Math.abs(h - 7.0) / 0.8), tramonto = Math.max(0, 1 - Math.abs(h - 18.6) / 0.9);
+  bg.copy(CIELO.notte).lerp(CIELO.giorno, f).lerp(CIELO.alba, alba * 0.55).lerp(CIELO.sera, tramonto * 0.5);
+  for (const v of vetri) v.material.color.copy(bg).lerp(BIANCO, 0.15 * f);
+  hemi.intensity = 0.3 + 0.5 * f; sole.intensity = 0.15 + 0.7 * f; sole.color.copy(LUNA).lerp(CALDO, f); hemi.color.copy(BLU).lerp(AZZURRO, f);
+}
+quadrante.ridisegna(fmtOra(Date.now()));
+
+// ---------- Dimensioni ----------
+const schermoDimRef = schermoDim;
+function ridimensiona() { const w = host.clientWidth, h = host.clientHeight; schermoDimRef.w = w; schermoDimRef.h = h; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(ridimensiona).observe(host); ridimensiona();
+{
+  const verticale = schermoDim.h > schermoDim.w;
+  camera.fov = verticale ? 40 : 34; camera.updateProjectionMatrix();
+  const t = Math.tan(camera.fov * Math.PI / 360), d = Math.max((verticale ? 9 : 10.5) / (t * camera.aspect), 7.8 / t);
+  camera.position.copy(controls.target).addScaledVector(new THREE.Vector3(0.2, 0.62, 0.76).normalize(), d);
+  controls.maxDistance = Math.max(46, d * 1.15); controls.update();
+  vistaIniziale = { target: controls.target.clone(), off: camera.position.clone().sub(controls.target) };
+}
+let campioni = 0, somma = 0;
+function qualita(dt) {
+  if (document.hidden || dt >= 0.05) return;
+  somma += dt; campioni++; if (campioni < 120) return;
+  const media = somma / campioni; campioni = 0; somma = 0;
+  const nuovo = media > 0.03 ? Math.max(PR_MIN, qualitaPR - 0.25) : media < 0.014 ? Math.min(PR_MAX, qualitaPR + 0.25) : qualitaPR;
+  if (nuovo !== qualitaPR) { qualitaPR = nuovo; renderer.setPixelRatio(qualitaPR); ridimensiona(); }
+}
+
+// ---------- Ciclo ----------
+const nuvolette = Array.from({ length: 8 }, () => { const s = mesh(sfera(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }), 0, -5, 0, scene, false); s.userData.vita = 0; return s; });
+function vapore(x, z) { nuvolette.forEach((s, i) => { s.position.set(x + (Math.random() - 0.5) * 0.15, 1.5 + i * 0.05, z + 0.1); s.userData.vita = 1 + i * 0.12; }); }
+const lampi = {};
+function aggiornaAgente(a, dt, ora, now) {
+  const m = a.m; m.fase += dt * 6;
+  if (a.giro) {
+    const g = a.giro;
+    if (g.attesa > 0) g.attesa -= dt;
+    else if (cammina(a.c, dt)) {
+      if (g.fase === "andata") { g.fase = "sosta"; g.attesa = 1.8; if (g.tipo === "caffe") { m.tazza.visible = true; vapore(2.2, -6.3); } }
+      else { a.giro = null; m.tazza.visible = false; }
+    }
+    if (g.fase === "sosta" && g.attesa <= 0) { g.fase = "ritorno"; a.c.strada = trova(a.c.x, a.c.z, a.x, a.z); a.c.v = 0; }
+    m.root.position.set(a.c.x, 0, a.c.z);
+  }
+  const st = statoDi(a, now), inPiedi = !!a.giro, camminando = inPiedi && a.c.strada && a.c.strada.length && !(a.giro.attesa > 0);
+  if (camminando) m.fase += dt * a.c.v * 2.2;
+  const t = posaBase(inPiedi ? (camminando ? "cammina" : "fermo") : st, m.fase, m.tazza.visible ? "tazza" : null);
+  if (a.reazione && ora > a.reazione.fino) a.reazione = null;
+  if (a.reazione && a.reazione.emote && !(st === "dorme" && a.reazione.emote === "balla")) posaEmote(t, a.reazione.emote, m.fase);
+  if (a.reazione && st === "dorme") { t.hrx = 0; t.brx = 0; }
+  const yawVoluto = inPiedi ? (camminando ? a.c.dir : m.yaw) : a.rot;
+  if (a.guarda && ora > a.guarda.fino) a.guarda = null;
+  const g = a.guarda || (io && vicino === a ? { x: io.c.x, z: io.c.z } : null);
+  if (g) t.hry = Math.max(-1.2, Math.min(1.2, angolo(m.yaw, Math.atan2(g.x - m.root.position.x, g.z - m.root.position.z))));
+  m.yaw += angolo(m.yaw, yawVoluto) * smorza(dt, 9); m.root.rotation.y = m.yaw;
+  applicaPosa(m, t, dt);
+  const fot = st === "lavora" ? Math.floor(m.fase / 1.5) : -1;
+  if (st !== a.stato || fot !== a.ultimoFot) { a.ultimoFot = fot; a.d.sch.ridisegna(st, fot, a.ex === "Claude" ? "#e0866a" : "#1db890"); }
+  a.stato = st;
+  let txt = "", cls = "";
+  if (a.reazione) { txt = a.reazione.testo; cls = "voce"; }
+  else if (a.giro) { txt = a.giro.testo; cls = "fatto"; }
+  else if (st === "lavora" && a.attivo) txt = corto(a.attivo.attivita, 60);
+  a.tag.dici(txt, cls); a.tag.dorme(st === "dorme" && !a.reazione);
+  a.tag.posiziona(m.root.position.x, 1.85, m.root.position.z);
+}
+function aggiornaIo(dt, ora) {
+  const m = io.m, arrivato = cammina(io.c, dt);
+  if (arrivato && io.giro && io.giro.tipo === "caffe") { m.tazza.visible = true; vapore(2.2, -6.3); dici(2.2, 1.9, -6.3, "Ecco il tuo caffè!"); io.giro = null; }
+  m.root.position.set(io.c.x, 0, io.c.z);
+  const camminando = io.c.strada && io.c.strada.length;
+  m.fase += dt * (camminando ? 6 + io.c.v * 2.2 : 6);
+  const t = posaBase(camminando ? "cammina" : "fermo", m.fase, m.tazza.visible ? "tazza" : null);
+  if (io.emote && ora < io.emoteFino) posaEmote(t, io.emote, m.fase); else io.emote = null;
+  if (camminando) m.yaw += angolo(m.yaw, io.c.dir) * smorza(dt, 10);
+  m.root.rotation.y = m.yaw; applicaPosa(m, t, dt); io.tag.posiziona(io.c.x, 1.85, io.c.z);
+}
+let prima = performance.now(), ultimoOrologio = "";
+function ciclo(adesso) {
+  const dt = Math.min(0.05, (adesso - prima) / 1000); prima = adesso; qualita(dt);
+  const now = Date.now();
+  for (const a of agenti) aggiornaAgente(a, dt, adesso, now);
+  vicino = null;
+  if (io) {
+    aggiornaIo(dt, adesso);
+    let best = 1.9; for (const a of agenti) { const d = Math.hypot(a.m.root.position.x - io.c.x, a.m.root.position.z - io.c.z); if (d < best) { best = d; vicino = a; } }
+    if (segui) { tmpOff.set(io.c.x, 0.8, io.c.z).sub(controls.target).multiplyScalar(smorza(dt, 3)); controls.target.add(tmpOff); camera.position.add(tmpOff); }
+  }
+  const p = $("#parla"); if (vicino && $("#scheda").hidden) { const t = "Guarda cosa fa " + vicino.nome; if (p.textContent !== t) p.textContent = t; p.hidden = false; } else p.hidden = true;
+  if (volo) {
+    volo.t = Math.min(1, volo.t + dt / 0.8); const e = volo.t < 0.5 ? 2 * volo.t * volo.t : 1 - Math.pow(-2 * volo.t + 2, 2) / 2;
+    controls.target.lerpVectors(volo.da, volo.a, e); camera.position.copy(controls.target).add(tmpOff.lerpVectors(volo.offDa, volo.offA, e)); if (volo.t >= 1) volo = null;
+  }
+  const fre = adesso < frenesia;
+  ledServer.forEach((l, i) => l.visible = ridotto || (fre ? Math.sin(adesso / 40 + i * 2.3) > 0 : Math.sin(adesso / 180 + i * 1.7) > -0.3));
+  for (const g of piante) { const s = g.userData.scossa; if (s > 0) { g.userData.scossa = Math.max(0, s - dt * 1.2); g.userData.chioma.rotation.z = Math.sin(s * 22) * 0.18 * s; } }
+  for (const s of nuvolette) if (s.userData.vita > 0) { s.userData.vita -= dt * 0.6; s.position.y += dt * 0.5; s.material.opacity = Math.max(0, Math.min(0.7, s.userData.vita)); }
+  if (anello && anello.userData.vita > 0) { anello.userData.vita -= dt * 0.8; anello.material.opacity = Math.max(0, anello.userData.vita); anello.scale.setScalar(1 + (1 - anello.userData.vita) * 0.6); }
+  for (let i = voci.length - 1; i >= 0; i--) { const v = voci[i]; if (adesso > v.fino) { v.e.via(); voci.splice(i, 1); } else v.e.posiziona(v.x, v.y, v.z); }
+  luce(oraRoma(now));
+  const hm = fmtOra(now); if (hm !== ultimoOrologio) { ultimoOrologio = hm; quadrante.ridisegna(hm); segnaLive(); }
+  aggiornaScheda(false);
+  controls.update(); renderer.render(scene, camera);
+  requestAnimationFrame(ciclo);
+}
+requestAnimationFrame(ciclo);
+document.fonts && document.fonts.ready.then(() => { for (const t of tutti) if (!t.vivo) t.ridisegna(); ultimoOrologio = ""; });
+</script>
+</body>
+</html>
