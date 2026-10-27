@@ -1,10 +1,18 @@
 {
- "aggiornato": "2026-10-27T11:52:30Z",
+ "aggiornato": "2026-10-27T12:10:47Z",
  "fonti": {
-  "Claude": "2026-10-27T11:46:56Z",
+  "Claude": "2026-10-27T12:05:48Z",
   "Codex": "2026-10-27T11:32:18Z"
  },
  "lavori": [
+  {
+   "chi": "sede",
+   "squadra": "Claude",
+   "attivita": "legge le community",
+   "inizio": "2026-10-27T12:05:48Z",
+   "aggiornato": "2026-10-27T12:05:48Z",
+   "fine": null
+  },
   {
    "chi": "sede",
    "squadra": "Claude",
