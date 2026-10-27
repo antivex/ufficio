@@ -1,10 +1,26 @@
 {
- "aggiornato": "2026-10-27T12:21:22Z",
+ "aggiornato": "2026-10-27T12:34:21Z",
  "fonti": {
-  "Claude": "2026-10-27T12:16:55Z",
-  "Codex": "2026-10-27T11:32:18Z"
+  "Claude": "2026-10-27T12:28:09Z",
+  "Codex": "2026-10-27T12:33:57Z"
  },
  "lavori": [
+  {
+   "chi": "atlas",
+   "squadra": "Codex",
+   "attivita": "lavora sul codice",
+   "inizio": "2026-10-27T12:33:57Z",
+   "aggiornato": "2026-10-27T12:33:57Z",
+   "fine": null
+  },
+  {
+   "chi": "sede",
+   "squadra": "Claude",
+   "attivita": "legge le community",
+   "inizio": "2026-10-27T12:05:48Z",
+   "aggiornato": "2026-10-27T12:28:09Z",
+   "fine": "2026-10-27T12:28:09Z"
+  },
   {
    "chi": "sede",
    "squadra": "Claude",
@@ -12,14 +28,6 @@
    "inizio": "2026-10-27T12:16:08Z",
    "aggiornato": "2026-10-27T12:16:55Z",
    "fine": "2026-10-27T12:16:55Z"
-  },
-  {
-   "chi": "sede",
-   "squadra": "Claude",
-   "attivita": "legge le community",
-   "inizio": "2026-10-27T12:05:48Z",
-   "aggiornato": "2026-10-27T12:05:48Z",
-   "fine": null
   },
   {
    "chi": "sede",
@@ -36,14 +44,6 @@
    "inizio": "2026-10-27T11:30:31Z",
    "aggiornato": "2026-10-27T11:32:18Z",
    "fine": "2026-10-27T11:32:18Z"
-  },
-  {
-   "chi": "sede",
-   "squadra": "Claude",
-   "attivita": "aggiorna la sede",
-   "inizio": "2026-10-27T11:16:07Z",
-   "aggiornato": "2026-10-27T11:16:56Z",
-   "fine": "2026-10-27T11:16:56Z"
   },
   {
    "chi": "scout",
