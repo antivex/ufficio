@@ -1,10 +1,34 @@
 {
- "aggiornato": "2026-10-27T10:57:46Z",
+ "aggiornato": "2026-10-27T11:52:30Z",
  "fonti": {
-  "Claude": "2026-10-27T10:46:53Z",
-  "Codex": "2026-10-27T10:41:41Z"
+  "Claude": "2026-10-27T11:46:56Z",
+  "Codex": "2026-10-27T11:32:18Z"
  },
  "lavori": [
+  {
+   "chi": "sede",
+   "squadra": "Claude",
+   "attivita": "aggiorna la sede",
+   "inizio": "2026-10-27T11:46:07Z",
+   "aggiornato": "2026-10-27T11:46:56Z",
+   "fine": "2026-10-27T11:46:56Z"
+  },
+  {
+   "chi": "scout",
+   "squadra": "Codex",
+   "attivita": "cerca opportunità",
+   "inizio": "2026-10-27T11:30:31Z",
+   "aggiornato": "2026-10-27T11:32:18Z",
+   "fine": "2026-10-27T11:32:18Z"
+  },
+  {
+   "chi": "sede",
+   "squadra": "Claude",
+   "attivita": "aggiorna la sede",
+   "inizio": "2026-10-27T11:16:07Z",
+   "aggiornato": "2026-10-27T11:16:56Z",
+   "fine": "2026-10-27T11:16:56Z"
+  },
   {
    "chi": "sede",
    "squadra": "Claude",
@@ -20,22 +44,6 @@
    "inizio": "2026-10-27T10:34:00Z",
    "aggiornato": "2026-10-27T10:41:41Z",
    "fine": "2026-10-27T10:41:41Z"
-  },
-  {
-   "chi": "sede",
-   "squadra": "Claude",
-   "attivita": "aggiorna la sede",
-   "inizio": "2026-10-27T10:17:55Z",
-   "aggiornato": "2026-10-27T10:18:58Z",
-   "fine": "2026-10-27T10:18:58Z"
-  },
-  {
-   "chi": "sede",
-   "squadra": "Claude",
-   "attivita": "legge le community",
-   "inizio": "2026-10-27T10:05:46Z",
-   "aggiornato": "2026-10-27T10:17:06Z",
-   "fine": "2026-10-27T10:17:06Z"
   },
   {
    "chi": "atlas",
@@ -254,22 +262,6 @@
    "fine": "2026-10-26T19:41:00Z"
   },
   {
-   "chi": "pulse",
-   "squadra": "Codex",
-   "attivita": "legge le community",
-   "inizio": "2026-10-26T19:04:11Z",
-   "aggiornato": "2026-10-26T19:18:27Z",
-   "fine": "2026-10-26T19:18:27Z"
-  },
-  {
-   "chi": "scout",
-   "squadra": "Codex",
-   "attivita": "cerca opportunità",
-   "inizio": "2026-10-26T18:36:00Z",
-   "aggiornato": "2026-10-26T18:40:00Z",
-   "fine": "2026-10-26T18:40:00Z"
-  },
-  {
    "chi": "leonardo",
    "squadra": "Claude",
    "attivita": "lavora sul codice",
@@ -302,7 +294,7 @@
    "fine": "2026-10-25T23:48:08Z"
   }
  ],
- "consegnatiOggi": 24,
+ "consegnatiOggi": 25,
  "incassi": "0,00 €",
  "obiettivo": "250 € al mese",
  "lavoroPubblico": null
