@@ -1,10 +1,18 @@
 {
- "aggiornato": "2026-10-27T12:10:47Z",
+ "aggiornato": "2026-10-27T12:21:22Z",
  "fonti": {
-  "Claude": "2026-10-27T12:05:48Z",
+  "Claude": "2026-10-27T12:16:55Z",
   "Codex": "2026-10-27T11:32:18Z"
  },
  "lavori": [
+  {
+   "chi": "sede",
+   "squadra": "Claude",
+   "attivita": "aggiorna la sede",
+   "inizio": "2026-10-27T12:16:08Z",
+   "aggiornato": "2026-10-27T12:16:55Z",
+   "fine": "2026-10-27T12:16:55Z"
+  },
   {
    "chi": "sede",
    "squadra": "Claude",
@@ -36,14 +44,6 @@
    "inizio": "2026-10-27T11:16:07Z",
    "aggiornato": "2026-10-27T11:16:56Z",
    "fine": "2026-10-27T11:16:56Z"
-  },
-  {
-   "chi": "sede",
-   "squadra": "Claude",
-   "attivita": "aggiorna la sede",
-   "inizio": "2026-10-27T10:46:06Z",
-   "aggiornato": "2026-10-27T10:46:53Z",
-   "fine": "2026-10-27T10:46:53Z"
   },
   {
    "chi": "scout",
